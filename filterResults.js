@@ -9,6 +9,10 @@
 // iz_input 9 "optsMode"
 // iz_input 10 "solution"
 // iz_input 11 "voteMode"
+// iz_input 12 "teamMode"
+// iz_input 13 "numberTeam"
+// iz_input 14 "delimTeam"
+// iz_input 15 "delimRename"
 
 // iz_output 1 "vote status"
 // iz_output 2 "begin vote"
@@ -28,7 +32,9 @@ var points = 10; // default value if points are not set
 var orderResult = 0;
 var display;
 var lettersConverterValue = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
-var questionNumber = 0;
+var teamMode = 0;
+var delimTeam = '';
+var delimRename = '';
 
 // Output variables
 var voteStatus = 0;
@@ -40,16 +46,51 @@ var voteLeft = 0;
 var delimString = '';
 var optsMode;
 var results = [];
+var teams;
+class Team {
+	constructor() {
+		this.number = 1;
+		this.name = '';
+		this.users = [];
+	}
+}
+
+class Teams {
+	constructor() {
+		this.team = new Team();
+	}
+}
+
+var teams = new Team();
+console.log('this is teams object', teams);
 
 function main(arguments) {
 	// Set up
 	optsMode = arguments[8];
 	opts = arguments[7];
 	points = arguments[10];
+	teamMode = arguments[11];
+	teamNumbers = arguments[12];
+	delimTeam = arguments[13];
+	delimRename = arguments[14];
 
+	// Team mode user selecting team
+	var teamRegex = new RegExp(`^${delimTeam}`, 'i');
+	if (teamMode && delimTeam && teamRegex.test(answer)) {
+		var regexteamNumber = `/(${delimTeam})(/d)/`;
+		var teamNumberSelected = answer.replace(regexteamNumber, '$2');
+	}
+	// Team mode user changing team name
+	var renameRegex = new RegExp(`^${delimRename}`, 'i');
+	if (teamMode && delimRename && teamRegex.test(answer)) {
+		var regexRenameTeam = `/(${delimTeam})(.|\s+)/`;
+		var teamNameSelected = answer.replace(regexRenameTeam, '$2');
+	}
 	// Start vote - Sequence Initialization
 	if (arguments[0]) {
 		voteStatus = 1;
+		beginVote = 1;
+		endVote = 0;
 		voteLeft = arguments[3];
 	}
 
@@ -185,6 +226,7 @@ function main(arguments) {
 		voteCast = 0; // clear votes cast
 		beginVote = 0; // Set beginVote to 0 (off)
 		endVote = 1; // Set endVote to 1 (on)
+		usersResponses = [];
 	}
 
 	// Reset (stop quizz)
@@ -226,5 +268,6 @@ function main(arguments) {
 	return display;
 }
 
-main([1, 0, 0, 2, 'userID4', 'A', '', 2, 1, 'A', 50]);
-//INPUT [ 0beginVote, 1endVote, 2reset, 3users, 4currID, 5currMess, 6delim, 7opts, 8optsMode, 9solution, 10points ]
+main([1, 0, 0, 2, 'userID4', 'A', '', 2, 1, 'A', 50, 0, 2, 'team', 'rename']);
+//INPUT [ 0beginVote, 1endVote, 2reset, 3users, 4currID, 5currMess, 6delim, 7opts
+//8optsMode, 9solution, 10points, 11teamMode, 12teamNumbers, 13delimTeam, 14delimRename ]
