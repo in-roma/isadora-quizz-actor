@@ -48,8 +48,9 @@ var voteLeft = 0;
 var delimString = '';
 var optsMode;
 var results = [];
-var teamsPlayers = [];
+var teamsPlayers = [[], [], [], []];
 var teamsNames = [];
+var teamsScores = [];
 
 function main(arguments) {
 	// Set up
@@ -61,22 +62,40 @@ function main(arguments) {
 	delimTeam = arguments[13];
 	delimRename = arguments[14];
 
-	// Team mode user selecting team
-	console.log('this delim team', delimTeam);
-	console.log('answer', arguments[5]);
+	// Team mode user selecting his team
+	var teamRegex = new RegExp(`^(${delimTeam})([1-9])$`, 'i');
 
-	var teamRegex = new RegExp(`^(${delimTeam})\s?(\d{1,2})`, 'i');
-	console.log('teamRegex.test(answer)', teamRegex.test(arguments[5]));
 	if (teamMode && delimTeam.length > 0 && teamRegex.test(arguments[5])) {
 		var teamNumberSelected = arguments[5].replace(teamRegex, '$2');
-		console.log('teamNumberSelected =', teamNumberSelected);
+		console.log('this is teamNumberSelected', teamNumberSelected);
+		teamNumInt = parseInt(teamNumberSelected) - 1;
+		if (
+			teamsPlayers.every((team) =>
+				team.every((user) => user !== arguments[4])
+			)
+		) {
+			teamsPlayers[teamNumInt].push(arguments[4]);
+		}
+		console.log(teamsPlayers);
 	}
-	// Team mode user changing team name
 
-	var renameRegex = new RegExp(`^(${delimRename})(.{1,20})`, 'i');
+	// Team mode user changing team name (name is under 20 characters - to change modify the range {1,20} within next line)
+	var renameRegex = new RegExp(`^(${delimRename})\s?(.{1,20})`, 'i');
 	if (teamMode && delimRename.length > 0 && renameRegex.test(arguments[5])) {
 		var teamNameSelected = arguments[5].replace(renameRegex, '$2');
-		console.log('teamNameSelected =', teamNameSelected);
+		console.log('this is teamNameSelected', teamNameSelected);
+
+		var teamUser;
+
+		for (var i = 0; i < teamsPlayers.length; i++) {
+			if (teamsPlayers[i].includes(arguments[4])) {
+				teamUser = i + 1;
+			}
+		}
+		if (teamUser) {
+			teamsNames[teamUser] = teamNameSelected;
+		}
+		console.log(teamsNames);
 	}
 	// Start vote - Sequence Initialization
 	if (arguments[0]) {
@@ -95,11 +114,9 @@ function main(arguments) {
 	var delimStringLength = delimString.length;
 	var delimRegex = new RegExp(`^${delimString}.?`, 'i');
 
-	// console.log('this is delimStringLength', delimStringLength);
 	if (delimStringLength > 0 && delimRegex.test(answer)) {
 		var pureAnswer = answer.split('').slice(delimStringLength).join('');
 		answer = pureAnswer;
-		// console.log('this is pure answer without delim', pureAnswer);
 	}
 
 	if (optsMode === 3) {
@@ -107,13 +124,11 @@ function main(arguments) {
 			var convertedAnswer =
 				lettersConverterValue.findIndex((el) => el === answer) + 1;
 			answer = parseInt(convertedAnswer);
-			// console.log('this is answer converted:', answer);
 		}
 		if (!parseInt(solution)) {
 			var convertedSolution =
 				lettersConverterValue.findIndex((el) => el === solution) + 1;
 			solution = parseInt(convertedSolution);
-			// console.log('this is solution converted:', solution);
 		}
 		if (typeof answer === 'string') {
 			answer = parseInt(answer);
@@ -123,23 +138,16 @@ function main(arguments) {
 		}
 	}
 	// User response validation according to : opts, optsMode & user answer
-
 	function validation(opts, answer, optsMode) {
 		if (optsMode === 3 || optsMode === 2) {
 			var answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
-			// console.log(
-			// 	'validation optmode 2 & 3',
-			// 	answerLitteralMode1.test(answer)
-			// );
+
 			return answerLitteralMode1.test(answer);
 		}
 		if (optsMode === 1) {
 			optsConverted = lettersConverterValue[opts - 1];
 			var answerLitteralMode2 = new RegExp(`[a-${optsConverted}]$`, 'i');
-			// console.log(
-			// 	'validation optmode 1',
-			// 	answerLitteralMode2.test(answer)
-			// );
+
 			return answerLitteralMode2.test(answer);
 		}
 	}
@@ -160,38 +168,20 @@ function main(arguments) {
 
 		// Score
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
-			// console.log('this userID is part of the user score board');
 			// If already scored & result is correct
-			// console.log('this is answer compared', answer);
-			// console.log('this is solution compared', solution);
+
 			if (answer === solution && orderResult <= arguments[3]) {
-				// console.log(
-				// 	'this is answer & solution in already score:',
-				// 	answer,
-				// 	solution
-				// );
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
 				);
-				// console.log('this is indexuser found:', indexUser);
+
 				usersScoresBoard[indexUser][1] =
 					usersScoresBoard[indexUser][1] + points;
-				// console.log(
-				// 	'this is user score board user array:',
-				// 	usersScoresBoard[indexUser]
-				// );
 			}
 		} else {
 			// If never scored & result is correct
-			// console.log('this userID is not part of the userscore board');
-			// console.log('this is answer compared', answer);
-			// console.log('this is solution compared', solution);
+
 			if (answer === solution && orderResult <= arguments[3]) {
-				// console.log(
-				// 	'this is  answer & solution in neverscore mode:',
-				// 	answer,
-				// 	solution
-				// );
 				usersScoresBoard.push([arguments[4], points]);
 			} else {
 				// If never scored & result is not correct
