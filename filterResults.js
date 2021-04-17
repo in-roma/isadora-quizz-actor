@@ -22,7 +22,9 @@
 // iz_output 6 "votes cast"
 // iz_output 7 "votes left"
 // iz_output 8 "# opts"
-// iz_output 9 "results"
+// iz_output 9 "answers"
+// iz_output 10 "usersScores"
+// iz_output 10 "teamsScores"
 
 // Utilities variables
 var usersResponses = [];
@@ -46,7 +48,8 @@ var voteLeft = 0;
 var delimString = '';
 var optsMode;
 var results = [];
-var teams = [];
+var teamsPlayers = [];
+var teamsNames = [];
 
 function main(arguments) {
 	// Set up
@@ -59,20 +62,20 @@ function main(arguments) {
 	delimRename = arguments[14];
 
 	// Team mode user selecting team
+	console.log('this delim team', delimTeam);
+	console.log('answer', arguments[5]);
 
-	var teamRegex = new RegExp(`^${delimTeam}`, 'i');
-	if (teamMode && delimTeam && teamRegex.test(answer)) {
-		var regexteamNumber = `/(${delimTeam})(/d)/`;
-		var teamNumberSelected = answer.replace(regexteamNumber, '$2');
-		console.log('regexteamNumber =', regexteamNumber);
+	var teamRegex = new RegExp(`^(${delimTeam})\s?(\d{1,2})`, 'i');
+	console.log('teamRegex.test(answer)', teamRegex.test(arguments[5]));
+	if (teamMode && delimTeam.length > 0 && teamRegex.test(arguments[5])) {
+		var teamNumberSelected = arguments[5].replace(teamRegex, '$2');
 		console.log('teamNumberSelected =', teamNumberSelected);
 	}
 	// Team mode user changing team name
-	var renameRegex = new RegExp(`^${delimRename}`, 'i');
-	if (teamMode && delimRename && teamRegex.test(answer)) {
-		var regexRenameTeam = `/(${delimTeam})(.|\s+)/`;
-		var teamNameSelected = answer.replace(regexRenameTeam, '$2');
-		console.log('regexRenameTeam =', regexRenameTeam);
+
+	var renameRegex = new RegExp(`^(${delimRename})(.{1,20})`, 'i');
+	if (teamMode && delimRename.length > 0 && renameRegex.test(arguments[5])) {
+		var teamNameSelected = arguments[5].replace(renameRegex, '$2');
 		console.log('teamNameSelected =', teamNameSelected);
 	}
 	// Start vote - Sequence Initialization
@@ -257,6 +260,6 @@ function main(arguments) {
 	return display;
 }
 
-main([1, 0, 0, 2, 'userID4', 'A', '', 2, 1, 'A', 50, 0, 2, 'team', 'rename']);
+main([1, 0, 0, 2, 'userID4', 'A', '', 2, 1, 'A', 50, 1, 2, 'team', 'rename']);
 //INPUT [ 0beginVote, 1endVote, 2reset, 3users, 4currID, 5currMess, 6delim, 7opts
 //8optsMode, 9solution, 10points, 11teamMode, 12teamNumbers, 13delimTeam, 14delimRename ]
