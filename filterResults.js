@@ -8,7 +8,7 @@
 // iz_input 8 "opts"
 // iz_input 9 "optsMode"
 // iz_input 10 "solution"
-// iz_input 11 "voteMode"
+// iz_input 11 "pointsValue"
 // iz_input 12 "teamMode"
 // iz_input 13 "numberTeam"
 // iz_input 14 "delimTeam"
@@ -22,9 +22,13 @@
 // iz_output 6 "votes cast"
 // iz_output 7 "votes left"
 // iz_output 8 "# opts"
-// iz_output 9 "answers"
-// iz_output 10 "usersScores"
-// iz_output 10 "teamsScores"
+// iz_output 9 "# opts-Mode"
+// iz_output 10 "users Scores"
+// iz_output 11 "teamsComposition"
+// iz_output 12 "teamsName"
+// iz_output 13 "teamsScores"
+// iz_output 14 "JSON teamsScores"
+// iz_output 15 "JSON roundScores"
 
 // Utilities variables
 var usersResponses = [];
@@ -37,6 +41,7 @@ var lettersConverterValue = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 var teamMode = 0;
 var delimTeam = '';
 var delimRename = '';
+var roundStarted = 0;
 
 // Output variables
 var voteStatus = 0;
@@ -50,7 +55,7 @@ var optsMode;
 var results = [];
 var teamsPlayers = [[], [], [], []];
 var teamsNames = [];
-var teamsScores = [];
+var teamsScores = [0, 0, 0, 0];
 
 function main(arguments) {
 	// Set up
@@ -76,7 +81,7 @@ function main(arguments) {
 		) {
 			teamsPlayers[teamNumInt].push(arguments[4]);
 		}
-		console.log(teamsPlayers);
+		console.log('this is teamsPlayers:', teamsPlayers);
 	}
 
 	// Team mode user changing team name (name is under 20 characters - to change modify the range {1,20} within next line)
@@ -85,24 +90,25 @@ function main(arguments) {
 		var teamNameSelected = arguments[5].replace(renameRegex, '$2');
 		console.log('this is teamNameSelected', teamNameSelected);
 
-		var teamUser;
+		var teamUser =
+			teamsPlayers.findIndex((team) => team.includes(arguments[4])) + 1;
 
-		for (var i = 0; i < teamsPlayers.length; i++) {
-			if (teamsPlayers[i].includes(arguments[4])) {
-				teamUser = i + 1;
-			}
-		}
+		console.log('this is team User:', teamUser);
 		if (teamUser) {
-			teamsNames[teamUser] = teamNameSelected;
+			var userFound = teamUser - 1;
+			console.log('userFound:', userFound);
+			teamsNames[userFound] = teamNameSelected;
 		}
-		console.log(teamsNames);
+		console.log('this is teamsNames:', teamsNames);
 	}
 	// Start vote - Sequence Initialization
 	if (arguments[0]) {
 		voteStatus = 1;
-		beginVote = 1;
+		beginVote = 0;
 		endVote = 0;
 		voteLeft = arguments[3];
+		voteCast = 0;
+		roundStarted = 1;
 	}
 
 	// Cleaning values
@@ -155,9 +161,10 @@ function main(arguments) {
 	// Storing users answers
 	if (
 		voteStatus &&
-		beginVote &&
+		roundStarted &&
 		!usersResponses.includes(arguments[4]) &&
-		validation(opts, answer, optsMode)
+		validation(opts, answer, optsMode) &&
+		voteLeft > 0
 	) {
 		// Vote states
 		voteLeft = voteLeft - 1;
@@ -167,37 +174,59 @@ function main(arguments) {
 		usersResponses.push(arguments[4]);
 
 		// Score
+		var teamUserPlaying;
+		var newScore;
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
 			// If already scored & result is correct
 
-			if (answer === solution && orderResult <= arguments[3]) {
+			if (answer === solution) {
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
 				);
-
+				// Adding Player Score
 				usersScoresBoard[indexUser][1] =
 					usersScoresBoard[indexUser][1] + points;
+				// Adding team score
+				if (teamMode) {
+					teamUserPlaying = teamsPlayers.findIndex((team) =>
+						team.includes(arguments[4])
+					);
+
+					newScore = teamsScores[teamUserPlaying] + points;
+					console.log('this is new score', newScore);
+					teamsScores[teamUserPlaying] = newScore;
+				}
 			}
 		} else {
 			// If never scored & result is correct
 
-			if (answer === solution && orderResult <= arguments[3]) {
+			if (answer === solution) {
+				// Adding Player Score
 				usersScoresBoard.push([arguments[4], points]);
-			} else {
-				// If never scored & result is not correct
-				usersScoresBoard.push([arguments[4], 0]);
+			}
+			// Adding team score
+			if (teamMode) {
+				teamUserPlaying = teamsPlayers.findIndex((team) =>
+					team.includes(arguments[4])
+				);
+
+				newScore = teamsScores[teamUserPlaying] + points;
+				console.log('this is new score', newScore);
+				teamsScores[teamUserPlaying] = newScore;
 			}
 		}
+
 		results.push(arguments[5]);
 		roundSolutions.push([arguments[4], arguments[5], orderResult]);
+		console.log('this is teamsScores:', teamsScores);
 
 		// Reset if all users have replied
-		if (voteLeft === 0) {
-			orderResult = 0;
-			voteLeft = arguments[3];
-			usersResponses = []; // clear userResponses
-			roundSolutions = []; // clear roundSolutions
-		}
+		// if (voteLeft === 0) {
+		// 	orderResult = 0;
+		// 	voteLeft = arguments[3];
+		// 	usersResponses = [];
+		// 	roundSolutions = [];
+		// }
 	}
 
 	// End vote
@@ -209,6 +238,7 @@ function main(arguments) {
 		beginVote = 0; // Set beginVote to 0 (off)
 		endVote = 1; // Set endVote to 1 (on)
 		usersResponses = [];
+		roundStarted = 0;
 	}
 
 	// Reset (stop quizz)
@@ -222,20 +252,65 @@ function main(arguments) {
 		usersResponses = []; // clear userResponses
 		roundSolutions = []; // clear roundSolutions
 		usersScoresBoard = []; // Set scores to empty array
-		results = []; // clear results
-		jsonOutputStringified = []; // clear jsonOutputStringified
+		results = []; // clear resultsvar teamsPlayers = [[], [], [], []];
+		teamsNames = [];
+		teamsScores = [0, 0, 0, 0];
+		teamsPlayers = [[], [], [], []];
+		roundStarted = 0;
 	}
 
 	// Results
-	var jsonOutput = {
-		usersScoresBoard, // voting results, i.e. a tally of how many votes each option has
-		roundSolutions, // list of users that have cast valid votes and what they voted for
-	};
-	var jsonOutputStringified = JSON.stringify(jsonOutput);
+	var teamScoreDetails = [
+		// {
+		// 	name: teamsNames[0],
+		// 	players: teamsPlayers[0],
+		// 	score: teamsScores[0],
+		// },
+		// {
+		// 	name: teamsNames[1],
+		// 	players: teamsPlayers[1],
+		// 	score: teamsScores[1],
+		// },
+		// {
+		// 	name: teamsNames[2],
+		// 	players: teamsPlayers[2],
+		// 	score: teamsScores[2],
+		// },
+		// {
+		// 	name: teamsNames[3],
+		// 	players: teamsPlayers[3],
+		// 	score: teamsScores[3],
+		// },
+	];
+	var teamScoreDetailsStringified = JSON.stringify(teamScoreDetails);
 
+	var answersView = [
+		{
+			correctAnswer: arguments[9],
+		},
+		{
+			individualScores: usersScoresBoard,
+		},
+
+		// {
+		// 	answer: roundSolution[0],
+		// },
+		// {
+		// 	answer: roundSolution[1],
+		// },
+		// {
+		// 	answer: roundSolution[2],
+		// },
+		// {
+		// 	answer: roundSolution[3],
+		// },
+	];
+	var answersViewStringified = JSON.stringify(answersView);
+
+	// Displays
 	display = [
 		voteStatus, // return vote status state (0/1)
-		beginVote, // return begin vote state (0/1)
+		arguments[0], // return begin vote state (0/1)
 		endVote, // return end vote state (0/1)
 		arguments[2], // return reset state (0/1)
 		arguments[3], // return # of users (this just passes through from the input)
@@ -243,7 +318,12 @@ function main(arguments) {
 		voteLeft, // return # of votes left to be cast
 		arguments[7], // return # of voting options (this just passes through from the input)
 		arguments[8], // return vote mode (this just passes through from the input)
-		jsonOutputStringified, // return results JSON string (to be hooked up to a JSON Parser actor)
+		usersScoresBoard,
+		teamsPlayers,
+		teamsNames,
+		teamsScores,
+		teamScoreDetailsStringified,
+		answersViewStringified,
 	];
 	// console.log(usersScoresBoard);
 
@@ -252,4 +332,4 @@ function main(arguments) {
 
 main([1, 0, 0, 2, 'userID4', 'A', '', 2, 1, 'A', 50, 1, 2, 'team', 'rename']);
 //INPUT [ 0beginVote, 1endVote, 2reset, 3users, 4currID, 5currMess, 6delim, 7opts
-//8optsMode, 9solution, 10points, 11teamMode, 12teamNumbers, 13delimTeam, 14delimRename ]
+//8optsMode, 9solution, 10points, 11teamMode, 12teamNumbers, 13delimTeam, 14delimRename
