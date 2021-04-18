@@ -31,7 +31,7 @@
 // iz_output 15 "JSON roundScores"
 
 // Utilities variables
-var usersResponses = [];
+var usersRoundHaveReplied = [];
 var roundSolutions = [];
 var usersScoresBoard = [];
 var points = 10; // default value if points are not set
@@ -45,20 +45,19 @@ var roundStarted = 0;
 
 // Output variables
 var voteStatus = 0;
-var beginVote = 0;
 var endVote = 0;
 var reset = 0;
 var voteCast = 0;
 var voteLeft = 0;
 var delimString = '';
 var optsMode;
-var results = [];
 var teamsPlayers = [[], [], [], []];
 var teamsNames = [];
 var teamsScores = [0, 0, 0, 0];
 
 function main(arguments) {
 	// Set up
+	var beginVote = 0;
 	optsMode = arguments[8];
 	opts = arguments[7];
 	points = arguments[10];
@@ -66,6 +65,7 @@ function main(arguments) {
 	teamNumbers = arguments[12];
 	delimTeam = arguments[13];
 	delimRename = arguments[14];
+	delimString = arguments[6];
 
 	// Team mode user selecting his team
 	var teamRegex = new RegExp(`^(${delimTeam})([1-9])$`, 'i');
@@ -114,16 +114,23 @@ function main(arguments) {
 	// Cleaning values
 	var answer = arguments[5].toLowerCase();
 	var solution = arguments[9].toLowerCase();
-	delimString = arguments[6].toLowerCase();
 
 	// Removing delim from answer
 	var delimStringLength = delimString.length;
-	var delimRegex = new RegExp(`^${delimString}.?`, 'i');
+	var delimRegex = new RegExp(`^${delimString}.+`, 'i');
+	console.log('delimStringLength:', delimStringLength);
+	console.log('delimRegex.test(answer):', delimRegex.test(answer));
 
 	if (delimStringLength > 0 && delimRegex.test(answer)) {
-		var pureAnswer = answer.split('').slice(delimStringLength).join('');
-		answer = pureAnswer;
+		var answerWithoutDelim = answer
+			.split('')
+			.slice(delimStringLength)
+			.join('');
+		answer = answerWithoutDelim;
+		console.log('Answer with delim slice done:', answer);
 	}
+
+	console.log('this anwser state before opts process', answer);
 
 	if (optsMode === 3) {
 		if (!parseInt(answer)) {
@@ -158,11 +165,12 @@ function main(arguments) {
 		}
 	}
 
+	console.log('this anwser state before scoring process', answer);
 	// Storing users answers
 	if (
 		voteStatus &&
 		roundStarted &&
-		!usersResponses.includes(arguments[4]) &&
+		!usersRoundHaveReplied.includes(arguments[4]) &&
 		validation(opts, answer, optsMode) &&
 		voteLeft > 0
 	) {
@@ -171,8 +179,13 @@ function main(arguments) {
 		voteCast = voteCast + 1;
 		orderResult = orderResult + 1;
 		// Scoring logic
-		usersResponses.push(arguments[4]);
-
+		usersRoundHaveReplied.push(arguments[4]);
+		// Needs to compare raws results
+		if (delimStringLength > 0) {
+			var solutionWithDelim = delimString + solution;
+			answer = arguments[5].toLowerCase();
+			solution = solutionWithDelim.toLowerCase();
+		}
 		// Score
 		var teamUserPlaying;
 		var newScore;
@@ -215,18 +228,10 @@ function main(arguments) {
 				teamsScores[teamUserPlaying] = newScore;
 			}
 		}
-
-		results.push(arguments[5]);
+		if (answer !== solution) {
+			usersScoresBoard.push([arguments[4], 0]);
+		}
 		roundSolutions.push([arguments[4], arguments[5], orderResult]);
-		console.log('this is teamsScores:', teamsScores);
-
-		// Reset if all users have replied
-		// if (voteLeft === 0) {
-		// 	orderResult = 0;
-		// 	voteLeft = arguments[3];
-		// 	usersResponses = [];
-		// 	roundSolutions = [];
-		// }
 	}
 
 	// End vote
@@ -237,7 +242,8 @@ function main(arguments) {
 		voteCast = 0; // clear votes cast
 		beginVote = 0; // Set beginVote to 0 (off)
 		endVote = 1; // Set endVote to 1 (on)
-		usersResponses = [];
+		usersRoundHaveReplied = [];
+		roundSolutions = [];
 		roundStarted = 0;
 	}
 
@@ -249,10 +255,9 @@ function main(arguments) {
 		orderResult = 0; // User order of reply
 		voteLeft = 0; // clear votes left
 		voteCast = 0; // clear votes cast
-		usersResponses = []; // clear userResponses
+		usersRoundHaveReplied = []; // clear userResponses
 		roundSolutions = []; // clear roundSolutions
 		usersScoresBoard = []; // Set scores to empty array
-		results = []; // clear resultsvar teamsPlayers = [[], [], [], []];
 		teamsNames = [];
 		teamsScores = [0, 0, 0, 0];
 		teamsPlayers = [[], [], [], []];
@@ -325,7 +330,9 @@ function main(arguments) {
 		teamScoreDetailsStringified,
 		answersViewStringified,
 	];
-	// console.log(usersScoresBoard);
+	console.log('this is usersRoundHaveReplied:', usersRoundHaveReplied);
+	console.log('this is roundSolutions:', roundSolutions);
+	console.log('this is usersScoresBoard:', usersScoresBoard);
 
 	return display;
 }
