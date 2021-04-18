@@ -59,6 +59,7 @@ var optsMode;
 var teamsPlayers = [];
 var teamsNames = [];
 var teamsScores = [];
+var answerstranslated = [];
 
 function main(arguments) {
 	// Set up
@@ -123,6 +124,8 @@ function main(arguments) {
 		voteLeft = arguments[3];
 		voteCast = 0;
 		roundStarted = 1;
+		answerstranslated = [];
+		roundSolutions = [];
 	}
 
 	// Cleaning values
@@ -247,7 +250,11 @@ function main(arguments) {
 		if (answer !== solution) {
 			usersScoresBoard.push([arguments[4], 0]);
 		}
-		roundSolutions.push([arguments[4], arguments[5], orderResult]);
+		roundSolutions.push([
+			arguments[4],
+			arguments[5].toLowerCase(),
+			orderResult,
+		]);
 	}
 
 	// End vote
@@ -259,7 +266,6 @@ function main(arguments) {
 		beginVote = 0; // Set beginVote to 0 (off)
 		endVote = 1; // Set endVote to 1 (on)
 		usersRoundHaveReplied = [];
-		roundSolutions = [];
 		roundStarted = 0;
 	}
 
@@ -283,14 +289,57 @@ function main(arguments) {
 	}
 
 	// Results
-	// Individuals
-	var answersView = [];
+	// Poll
+	// if ((optsMode === 1 || optsMode === 3) && endVote) {
+	// var replies = Array.from({ length: arguments[7] }, (v, k) => 0);
+	// var replierLettered = replies.map(
+	// 	(el, index) => lettersConverterValue[index]
+	// );
+	// var tempArr = [];
+	// replierLettered.forEach((element, index) => {
+	// 	tempArr.push(roundSolutions.find((el) => el[1] === element));
+	// 	answerstranslated.push({
+	// 		index: element,
+	// 		users: tempArr,
+	// 	});
+	// 	tempArr = [];
+	// });
+	// var listOfQuestionsAnswered;
+	// listOfQuestionsAnswered.map((el) => roundSolutions[1]);
+	// listAnswers = listAnswers.filter(function (x, i, a) {
+	// 	return a.indexOf(x) == i;
+	// });
+	// var results1 = [];
+	// listAnswers.forEach(ele, (index) => {
+	// 	results1.push({ index: ele, users });
+	// });
+	// results1.forEach(ele, (index1) => {
+	// 	roundSolutions.forEach(sol, (index2) => {
+	// 		if (ele === sol[1]) {
+	// 			results1[index1].user = sol[0];
+	// 		}
+	// 	});
+	// });
+	// }
+	// if (optsMode === 2 && endVote) {
+	// 	var replies = Array.from({ length: arguments[7] }, (v, k) => 0);
 
-	var answersViewStringified = JSON.stringify(answersView);
+	// 	var tempArr2 = [];
+	// 	replies.forEach((element, index) => {
+	// 		tempArr2.push(roundSolutions.find((el) => el[1] === element));
+	// 		answerstranslated.push({
+	// 			index: element + 1,
+	// 			users: tempArr,
+	// 		});
+	// 		tempArr2 = [];
+	// 	});
+	// }
+
+	// var answersViewStringified = JSON.stringify(answerstranslated);
 
 	// Teams
 	var teamScoreDetails = [];
-	var teamScoreDetailsStringified = JSON.stringify(teamScoreDetails);
+	// var teamScoreDetailsStringified = JSON.stringify(teamScoreDetails);
 
 	// Displays
 	if (teamMode === 0) {
@@ -307,7 +356,7 @@ function main(arguments) {
 			teamInitialized,
 			usersScoresBoard,
 			teamsPlayers,
-			answersViewStringified,
+			// answersViewStringified,
 		];
 	}
 	if (teamMode === 1 && !teamInitialized) {
@@ -344,8 +393,8 @@ function main(arguments) {
 			teamsPlayers,
 			teamsNames,
 			teamsScores,
-			teamScoreDetailsStringified,
-			answersViewStringified,
+			// teamScoreDetailsStringified,
+			// answersViewStringified,
 		];
 	}
 	console.log('this is usersRoundHaveReplied:', usersRoundHaveReplied);
