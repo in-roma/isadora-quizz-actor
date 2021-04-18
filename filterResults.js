@@ -13,6 +13,8 @@
 // iz_input 13 "numberTeam"
 // iz_input 14 "delimTeam"
 // iz_input 15 "delimRename"
+// iz_input 15 "delimRename"
+// iz_input 16 "team initialization"
 
 // iz_output 1 "vote status"
 // iz_output 2 "begin vote"
@@ -23,14 +25,16 @@
 // iz_output 7 "votes left"
 // iz_output 8 "# opts"
 // iz_output 9 "# opts-Mode"
-// iz_output 10 "users Scores"
-// iz_output 11 "teamsComposition"
-// iz_output 12 "teamsName"
-// iz_output 13 "teamsScores"
-// iz_output 14 "JSON teamsScores"
-// iz_output 15 "JSON roundScores"
+// iz_input 10 "team initialized"
+// iz_output 11 "users Scores"
+// iz_output 12 "teamsComposition"
+// iz_output 13 "teamsName"
+// iz_output 14 "teamsScores"
+// iz_output 15 "JSON teamsScores"
+// iz_output 16 "JSON roundScores"
 
 // Utilities variables
+var initialization = 0;
 var usersRoundHaveReplied = [];
 var roundSolutions = [];
 var usersScoresBoard = [];
@@ -42,6 +46,7 @@ var teamMode = 0;
 var delimTeam = '';
 var delimRename = '';
 var roundStarted = 0;
+var teamInitialized = 0;
 
 // Output variables
 var voteStatus = 0;
@@ -51,9 +56,9 @@ var voteCast = 0;
 var voteLeft = 0;
 var delimString = '';
 var optsMode;
-var teamsPlayers = [[], [], [], []];
+var teamsPlayers = [];
 var teamsNames = [];
-var teamsScores = [0, 0, 0, 0];
+var teamsScores = [];
 
 function main(arguments) {
 	// Set up
@@ -66,6 +71,15 @@ function main(arguments) {
 	delimTeam = arguments[13];
 	delimRename = arguments[14];
 	delimString = arguments[6];
+	initialization = arguments[15];
+
+	// Set up team Mode
+	if (teamMode === 1 && initialization) {
+		teamsPlayers = Array.from({ length: arguments[12] }, (v, k) => []);
+		teamsScores = Array.from({ length: arguments[12] }, (v, k) => 0);
+		teamInitialized = 1;
+		initialization = 0;
+	}
 
 	// Team mode user selecting his team
 	var teamRegex = new RegExp(`^(${delimTeam})([1-9])$`, 'i');
@@ -101,7 +115,7 @@ function main(arguments) {
 		}
 		console.log('this is teamsNames:', teamsNames);
 	}
-	// Start vote - Sequence Initialization
+	// Begin vote - Start round
 	if (arguments[0]) {
 		voteStatus = 1;
 		beginVote = 0;
@@ -191,7 +205,8 @@ function main(arguments) {
 		var newScore;
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
 			// If already scored & result is correct
-
+			console.log('this answer user never replied:', answer);
+			console.log('this solution user never replied:', solution);
 			if (answer === solution) {
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
@@ -212,7 +227,8 @@ function main(arguments) {
 			}
 		} else {
 			// If never scored & result is correct
-
+			console.log('this answer user never scored:', answer);
+			console.log('this solution user never scored:', solution);
 			if (answer === solution) {
 				// Adding Player Score
 				usersScoresBoard.push([arguments[4], points]);
@@ -249,6 +265,8 @@ function main(arguments) {
 
 	// Reset (stop quizz)
 	if (arguments[2]) {
+		initialization = 0;
+		teamInitialized = 0;
 		voteStatus = 0; // Set voteStatus to 0 (off)
 		beginVote = 0; // Set beginVote to 0 (off)
 		reset = 1; // Set reset to 1 (on)
@@ -259,77 +277,77 @@ function main(arguments) {
 		roundSolutions = []; // clear roundSolutions
 		usersScoresBoard = []; // Set scores to empty array
 		teamsNames = [];
-		teamsScores = [0, 0, 0, 0];
-		teamsPlayers = [[], [], [], []];
+		teamsScores = [];
+		teamsPlayers = [];
 		roundStarted = 0;
 	}
 
 	// Results
-	var teamScoreDetails = [
-		// {
-		// 	name: teamsNames[0],
-		// 	players: teamsPlayers[0],
-		// 	score: teamsScores[0],
-		// },
-		// {
-		// 	name: teamsNames[1],
-		// 	players: teamsPlayers[1],
-		// 	score: teamsScores[1],
-		// },
-		// {
-		// 	name: teamsNames[2],
-		// 	players: teamsPlayers[2],
-		// 	score: teamsScores[2],
-		// },
-		// {
-		// 	name: teamsNames[3],
-		// 	players: teamsPlayers[3],
-		// 	score: teamsScores[3],
-		// },
-	];
-	var teamScoreDetailsStringified = JSON.stringify(teamScoreDetails);
+	// Individuals
+	var answersView = [];
 
-	var answersView = [
-		{
-			correctAnswer: arguments[9],
-		},
-		{
-			individualScores: usersScoresBoard,
-		},
-
-		// {
-		// 	answer: roundSolution[0],
-		// },
-		// {
-		// 	answer: roundSolution[1],
-		// },
-		// {
-		// 	answer: roundSolution[2],
-		// },
-		// {
-		// 	answer: roundSolution[3],
-		// },
-	];
 	var answersViewStringified = JSON.stringify(answersView);
 
+	// Teams
+	var teamScoreDetails = [];
+	var teamScoreDetailsStringified = JSON.stringify(teamScoreDetails);
+
 	// Displays
-	display = [
-		voteStatus, // return vote status state (0/1)
-		arguments[0], // return begin vote state (0/1)
-		endVote, // return end vote state (0/1)
-		arguments[2], // return reset state (0/1)
-		arguments[3], // return # of users (this just passes through from the input)
-		voteCast, // return # of votes cast
-		voteLeft, // return # of votes left to be cast
-		arguments[7], // return # of voting options (this just passes through from the input)
-		arguments[8], // return vote mode (this just passes through from the input)
-		usersScoresBoard,
-		teamsPlayers,
-		teamsNames,
-		teamsScores,
-		teamScoreDetailsStringified,
-		answersViewStringified,
-	];
+	if (teamMode === 0) {
+		display = [
+			voteStatus, // return vote status state (0/1)
+			arguments[0], // return begin vote state (0/1)
+			endVote, // return end vote state (0/1)
+			arguments[2], // return reset state (0/1)
+			arguments[3], // return # of users (this just passes through from the input)
+			voteCast, // return # of votes cast
+			voteLeft, // return # of votes left to be cast
+			arguments[7], // return # of voting options (this just passes through from the input)
+			arguments[8], // return vote mode (this just passes through from the input)
+			teamInitialized,
+			usersScoresBoard,
+			teamsPlayers,
+			answersViewStringified,
+		];
+	}
+	if (teamMode === 1 && !teamInitialized) {
+		display = [
+			voteStatus, // return vote status state (0/1)
+			arguments[0], // return begin vote state (0/1)
+			endVote, // return end vote state (0/1)
+			arguments[2], // return reset state (0/1)
+			arguments[3], // return # of users (this just passes through from the input)
+			voteCast, // return # of votes cast
+			voteLeft, // return # of votes left to be cast
+			arguments[7], // return # of voting options (this just passes through from the input)
+			arguments[8], // return vote mode (this just passes through from the input)
+			teamInitialized,
+			usersScoresBoard,
+			teamsPlayers,
+			teamsNames,
+			teamsScores,
+		];
+	}
+	if (teamMode === 1 && teamInitialized) {
+		display = [
+			voteStatus, // return vote status state (0/1)
+			arguments[0], // return begin vote state (0/1)
+			endVote, // return end vote state (0/1)
+			arguments[2], // return reset state (0/1)
+			arguments[3], // return # of users (this just passes through from the input)
+			voteCast, // return # of votes cast
+			voteLeft, // return # of votes left to be cast
+			arguments[7], // return # of voting options (this just passes through from the input)
+			arguments[8], // return vote mode (this just passes through from the input)
+			teamInitialized,
+			usersScoresBoard,
+			teamsPlayers,
+			teamsNames,
+			teamsScores,
+			teamScoreDetailsStringified,
+			answersViewStringified,
+		];
+	}
 	console.log('this is usersRoundHaveReplied:', usersRoundHaveReplied);
 	console.log('this is roundSolutions:', roundSolutions);
 	console.log('this is usersScoresBoard:', usersScoresBoard);
@@ -337,6 +355,23 @@ function main(arguments) {
 	return display;
 }
 
-main([1, 0, 0, 2, 'userID4', 'A', '', 2, 1, 'A', 50, 1, 2, 'team', 'rename']);
+main([
+	0, //0beginVote
+	0, //1endVote
+	0, //2reset
+	2, //3users
+	'', //4currID
+	'', //5currMess
+	'', //6delim
+	2, //7opts
+	1, //8optsMode
+	'', //9solution
+	50, //10points
+	1, //11teamMode
+	2, //12teamNumbers
+	'team', //13delimTeam
+	'rename', //14delimRename
+	0, //15teaminitialization
+]);
 //INPUT [ 0beginVote, 1endVote, 2reset, 3users, 4currID, 5currMess, 6delim, 7opts
-//8optsMode, 9solution, 10points, 11teamMode, 12teamNumbers, 13delimTeam, 14delimRename
+//8optsMode, 9solution, 10points, 11teamMode, 12teamNumbers, 13delimTeam, 14delimRename, 15teaminitialization
