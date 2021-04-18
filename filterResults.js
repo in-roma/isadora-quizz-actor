@@ -232,16 +232,16 @@ function main(arguments) {
 			if (answer === solution) {
 				// Adding Player Score
 				usersScoresBoard.push([arguments[4], points]);
-			}
-			// Adding team score
-			if (teamMode) {
-				teamUserPlaying = teamsPlayers.findIndex((team) =>
-					team.includes(arguments[4])
-				);
+				// Adding team score
+				if (teamMode) {
+					teamUserPlaying = teamsPlayers.findIndex((team) =>
+						team.includes(arguments[4])
+					);
 
-				newScore = teamsScores[teamUserPlaying] + points;
-				console.log('this is new score', newScore);
-				teamsScores[teamUserPlaying] = newScore;
+					newScore = teamsScores[teamUserPlaying] + points;
+					console.log('this is new score', newScore);
+					teamsScores[teamUserPlaying] = newScore;
+				}
 			}
 		}
 		if (answer !== solution) {
