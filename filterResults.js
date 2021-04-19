@@ -290,56 +290,55 @@ function main(arguments) {
 
 	// Results
 	// Poll
-	// if ((optsMode === 1 || optsMode === 3) && endVote) {
-	// var replies = Array.from({ length: arguments[7] }, (v, k) => 0);
-	// var replierLettered = replies.map(
-	// 	(el, index) => lettersConverterValue[index]
-	// );
-	// var tempArr = [];
-	// replierLettered.forEach((element, index) => {
-	// 	tempArr.push(roundSolutions.find((el) => el[1] === element));
-	// 	answerstranslated.push({
-	// 		index: element,
-	// 		users: tempArr,
-	// 	});
-	// 	tempArr = [];
-	// });
-	// var listOfQuestionsAnswered;
-	// listOfQuestionsAnswered.map((el) => roundSolutions[1]);
-	// listAnswers = listAnswers.filter(function (x, i, a) {
-	// 	return a.indexOf(x) == i;
-	// });
-	// var results1 = [];
-	// listAnswers.forEach(ele, (index) => {
-	// 	results1.push({ index: ele, users });
-	// });
-	// results1.forEach(ele, (index1) => {
-	// 	roundSolutions.forEach(sol, (index2) => {
-	// 		if (ele === sol[1]) {
-	// 			results1[index1].user = sol[0];
-	// 		}
-	// 	});
-	// });
-	// }
-	// if (optsMode === 2 && endVote) {
-	// 	var replies = Array.from({ length: arguments[7] }, (v, k) => 0);
+	var pollListStringified;
+	if ((optsMode === 1 || optsMode === 3) && endVote) {
+		var repliesPoll1 = Array.from({ length: arguments[7] }, (v, k) => 0);
+		var replierLettered = repliesPoll1.map(
+			(el, index) => lettersConverterValue[index]
+		);
+		var pollList = [];
+		replierLettered.forEach((element) => {
+			pollList.push({
+				index: element,
+				users: [],
+				votes: 0,
+			});
+		});
+		pollList.forEach((element) => {
+			roundSolutions.forEach((el) => {
+				if (el[1] === element.index) {
+					element.users.push(el[0]);
+					element.votes = element.votes + 1;
+				}
+			});
+		});
+		pollListStringified = JSON.stringify(pollList);
+	}
 
-	// 	var tempArr2 = [];
-	// 	replies.forEach((element, index) => {
-	// 		tempArr2.push(roundSolutions.find((el) => el[1] === element));
-	// 		answerstranslated.push({
-	// 			index: element + 1,
-	// 			users: tempArr,
-	// 		});
-	// 		tempArr2 = [];
-	// 	});
-	// }
+	if (optsMode === 2 && endVote) {
+		var repliesPoll2 = Array.from(
+			{ length: arguments[7] },
+			(v, k) => k + 1
+		);
 
-	// var answersViewStringified = JSON.stringify(answerstranslated);
-
-	// Teams
-	var teamScoreDetails = [];
-	// var teamScoreDetailsStringified = JSON.stringify(teamScoreDetails);
+		var pollList2 = [];
+		repliesPoll2.forEach((element) => {
+			pollList2.push({
+				index: element,
+				users: [],
+				votes: 0,
+			});
+		});
+		pollList2.forEach((element) => {
+			roundSolutions.forEach((el) => {
+				if (parseInt(el[1]) === element.index) {
+					element.users.push(el[0]);
+					element.votes = element.votes + 1;
+				}
+			});
+		});
+		pollListStringified = JSON.stringify(pollList2);
+	}
 
 	// Displays
 	if (teamMode === 0) {
@@ -356,7 +355,7 @@ function main(arguments) {
 			teamInitialized,
 			usersScoresBoard,
 			teamsPlayers,
-			// answersViewStringified,
+			pollListStringified,
 		];
 	}
 	if (teamMode === 1 && !teamInitialized) {
@@ -393,8 +392,7 @@ function main(arguments) {
 			teamsPlayers,
 			teamsNames,
 			teamsScores,
-			// teamScoreDetailsStringified,
-			// answersViewStringified,
+			pollListStringified,
 		];
 	}
 	console.log('this is usersRoundHaveReplied:', usersRoundHaveReplied);
