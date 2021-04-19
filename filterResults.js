@@ -25,13 +25,12 @@
 // iz_output 7 "votes left"
 // iz_output 8 "# opts"
 // iz_output 9 "# opts-Mode"
-// iz_input 10 "team initialized"
+// iz_output 10 "team initialized"
 // iz_output 11 "users Scores"
 // iz_output 12 "teamsComposition"
 // iz_output 13 "teamsName"
 // iz_output 14 "teamsScores"
-// iz_output 15 "JSON teamsScores"
-// iz_output 16 "JSON roundScores"
+// iz_output 15 "JSONpoll"
 
 // Utilities variables
 var initialization = 0;
@@ -90,7 +89,11 @@ function main(arguments) {
 	// Team mode user selecting his team
 	var teamRegex = new RegExp(`^(${delimTeam})([1-9])$`, 'i');
 
-	if (teamMode && delimTeam.length > 0 && teamRegex.test(arguments[5])) {
+	if (
+		(teamMode === 1 || teamMode === 2) &&
+		delimTeam.length > 0 &&
+		teamRegex.test(arguments[5])
+	) {
 		var teamNumberSelected = arguments[5].replace(teamRegex, '$2');
 		teamNumInt = parseInt(teamNumberSelected) - 1;
 		if (
@@ -104,7 +107,11 @@ function main(arguments) {
 
 	// Team mode user changing team name (name is under 20 characters - to change modify the range {1,20} within next line)
 	var renameRegex = new RegExp(`^(${delimRename})\s?(.{1,20})`, 'i');
-	if (teamMode && delimRename.length > 0 && renameRegex.test(arguments[5])) {
+	if (
+		(teamMode === 1 || teamMode === 2) &&
+		delimRename.length > 0 &&
+		renameRegex.test(arguments[5])
+	) {
 		var teamNameSelected = arguments[5].replace(renameRegex, '$2');
 
 		var teamUser =
@@ -141,14 +148,15 @@ function main(arguments) {
 
 	// Removing delim from answer
 	var delimStringLength = delimString.length;
-	var delimRegex = new RegExp(`^${delimString}.+`, 'i');
+	var delimRegex = new RegExp(`^(?:${delimString})`, 'i');
+	var stateDelim = delimRegex.test(arguments[5]);
+	console.log('this is delimStringLength > 0:', delimStringLength > 0);
+	console.log('this is delimRegex.test(answer):', stateDelim);
 
-	if (delimStringLength > 0 && delimRegex.test(answer)) {
-		var answerWithoutDelim = answer
-			.split('')
-			.slice(delimStringLength)
-			.join('');
+	if (delimStringLength > 0 && delimRegex.test(arguments[5])) {
+		answerWithoutDelim = answer.split('').slice(delimStringLength).join('');
 		answer = answerWithoutDelim;
+		console.log('this is answer without delim:', answerWithoutDelim);
 	}
 
 	if (optsMode === 3) {
@@ -171,17 +179,41 @@ function main(arguments) {
 	}
 	// User response validation according to : opts, optsMode & user answer
 	function validation(opts, answer, optsMode) {
-		if (optsMode === 3 || optsMode === 2) {
-			var answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
+		var validation = false;
+		console.log('this is test if delim:', stateDelim);
+		if (delimStringLength > 0) {
+			if ((optsMode === 3 || optsMode === 2) && stateDelim) {
+				var answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
 
-			return answerLitteralMode1.test(answer);
-		}
-		if (optsMode === 1) {
-			optsConverted = lettersConverterValue[opts - 1];
-			var answerLitteralMode2 = new RegExp(`[a-${optsConverted}]$`, 'i');
+				validation = answerLitteralMode1.test(answer);
+			}
+			if (optsMode === 1 && stateDelim) {
+				optsConverted = lettersConverterValue[opts - 1];
+				var answerLitteralMode2 = new RegExp(
+					`[a-${optsConverted}]$`,
+					'i'
+				);
 
-			return answerLitteralMode2.test(answer);
+				validation = answerLitteralMode2.test(answer);
+			}
 		}
+		if (delimStringLength === 0) {
+			if (optsMode === 3 || optsMode === 2) {
+				var answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
+
+				validation = answerLitteralMode1.test(answer);
+			}
+			if (optsMode === 1) {
+				optsConverted = lettersConverterValue[opts - 1];
+				var answerLitteralMode2 = new RegExp(
+					`[a-${optsConverted}]$`,
+					'i'
+				);
+
+				validation = answerLitteralMode2.test(answer);
+			}
+		}
+		return validation;
 	}
 
 	// Storing users answers
@@ -192,6 +224,10 @@ function main(arguments) {
 		validation(opts, answer, optsMode) &&
 		voteLeft > 0
 	) {
+		console.log(
+			'this validation status in scoring process:',
+			validation(opts, arguments[5], optsMode)
+		);
 		// Vote states
 		voteLeft = voteLeft - 1;
 		voteCast = voteCast + 1;
@@ -199,17 +235,20 @@ function main(arguments) {
 		// Scoring logic
 		usersRoundHaveReplied.push(arguments[4]);
 		// Needs to compare raws results
-		if (delimStringLength > 0) {
-			var solutionWithDelim = delimString + solution;
-			answer = arguments[5].toLowerCase();
-			solution = solutionWithDelim.toLowerCase();
-		}
+		// if (delimStringLength > 0) {
+		// 	var solutionWithDelim = delimString + solution;
+		// 	answer = arguments[5].toLowerCase();
+		// 	solution = solutionWithDelim.toLowerCase();
+		// }
 		// Score
+		console.log('this is answer before score function', answer);
+		console.log('this is solution before score function', solution);
 		var teamUserPlaying;
 		var newScore;
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
 			// If already scored & result is correct
-
+			console.log('this is answer:', answer);
+			console.log('this is solution:', solution);
 			if (answer === solution) {
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
@@ -238,7 +277,6 @@ function main(arguments) {
 			}
 		} else {
 			// If never scored & result is correct
-
 			if (answer === solution) {
 				// Adding Player Score
 				usersScoresBoard.push([arguments[4], points]);
@@ -261,13 +299,14 @@ function main(arguments) {
 					}
 				}
 			}
+			if (answer !== solution) {
+				usersScoresBoard.push([arguments[4], 0]);
+			}
 		}
-		if (answer !== solution) {
-			usersScoresBoard.push([arguments[4], 0]);
-		}
+
 		roundSolutions.push([
 			arguments[4],
-			arguments[5].toLowerCase(),
+			answerWithoutDelim.toLowerCase(),
 			orderResult,
 		]);
 	}
@@ -305,6 +344,7 @@ function main(arguments) {
 	}
 
 	// Results
+
 	// Poll
 	var pollListStringified;
 	if ((optsMode === 1 || optsMode === 3) && endVote) {
@@ -374,7 +414,7 @@ function main(arguments) {
 			pollListStringified,
 		];
 	}
-	if (teamMode === 1 && !teamInitialized) {
+	if ((teamMode === 1 || teamMode === 2) && !teamInitialized) {
 		display = [
 			voteStatus, // return vote status state (0/1)
 			arguments[0], // return begin vote state (0/1)
@@ -392,7 +432,8 @@ function main(arguments) {
 			teamsScores,
 		];
 	}
-	if (teamMode === 1 && teamInitialized) {
+
+	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
 		display = [
 			voteStatus, // return vote status state (0/1)
 			arguments[0], // return begin vote state (0/1)
