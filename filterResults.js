@@ -59,6 +59,7 @@ var optsMode;
 var teamsPlayers = [];
 var teamsNames = [];
 var teamsScores = [];
+var teamModeOnlyOneReply = [];
 var answerstranslated = [];
 
 function main(arguments) {
@@ -78,6 +79,10 @@ function main(arguments) {
 	if (teamMode === 1 && initialization) {
 		teamsPlayers = Array.from({ length: arguments[12] }, (v, k) => []);
 		teamsScores = Array.from({ length: arguments[12] }, (v, k) => 0);
+		teamModeOnlyOneReply = Array.from(
+			{ length: arguments[12] },
+			(v, k) => 0
+		);
 		teamInitialized = 1;
 		initialization = 0;
 	}
@@ -87,7 +92,6 @@ function main(arguments) {
 
 	if (teamMode && delimTeam.length > 0 && teamRegex.test(arguments[5])) {
 		var teamNumberSelected = arguments[5].replace(teamRegex, '$2');
-		console.log('this is teamNumberSelected', teamNumberSelected);
 		teamNumInt = parseInt(teamNumberSelected) - 1;
 		if (
 			teamsPlayers.every((team) =>
@@ -96,25 +100,21 @@ function main(arguments) {
 		) {
 			teamsPlayers[teamNumInt].push(arguments[4]);
 		}
-		console.log('this is teamsPlayers:', teamsPlayers);
 	}
 
 	// Team mode user changing team name (name is under 20 characters - to change modify the range {1,20} within next line)
 	var renameRegex = new RegExp(`^(${delimRename})\s?(.{1,20})`, 'i');
 	if (teamMode && delimRename.length > 0 && renameRegex.test(arguments[5])) {
 		var teamNameSelected = arguments[5].replace(renameRegex, '$2');
-		console.log('this is teamNameSelected', teamNameSelected);
 
 		var teamUser =
 			teamsPlayers.findIndex((team) => team.includes(arguments[4])) + 1;
 
-		console.log('this is team User:', teamUser);
 		if (teamUser) {
 			var userFound = teamUser - 1;
-			console.log('userFound:', userFound);
+
 			teamsNames[userFound] = teamNameSelected;
 		}
-		console.log('this is teamsNames:', teamsNames);
 	}
 	// Begin vote - Start round
 	if (arguments[0]) {
@@ -128,6 +128,13 @@ function main(arguments) {
 		roundSolutions = [];
 	}
 
+	if (teamMode === 2 && beginVote) {
+		teamModeOnlyOneReply = Array.from(
+			{ length: arguments[12] },
+			(v, k) => 0
+		);
+	}
+
 	// Cleaning values
 	var answer = arguments[5].toLowerCase();
 	var solution = arguments[9].toLowerCase();
@@ -135,8 +142,6 @@ function main(arguments) {
 	// Removing delim from answer
 	var delimStringLength = delimString.length;
 	var delimRegex = new RegExp(`^${delimString}.+`, 'i');
-	console.log('delimStringLength:', delimStringLength);
-	console.log('delimRegex.test(answer):', delimRegex.test(answer));
 
 	if (delimStringLength > 0 && delimRegex.test(answer)) {
 		var answerWithoutDelim = answer
@@ -144,10 +149,7 @@ function main(arguments) {
 			.slice(delimStringLength)
 			.join('');
 		answer = answerWithoutDelim;
-		console.log('Answer with delim slice done:', answer);
 	}
-
-	console.log('this anwser state before opts process', answer);
 
 	if (optsMode === 3) {
 		if (!parseInt(answer)) {
@@ -182,7 +184,6 @@ function main(arguments) {
 		}
 	}
 
-	console.log('this anwser state before scoring process', answer);
 	// Storing users answers
 	if (
 		voteStatus &&
@@ -208,8 +209,7 @@ function main(arguments) {
 		var newScore;
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
 			// If already scored & result is correct
-			console.log('this answer user never replied:', answer);
-			console.log('this solution user never replied:', solution);
+
 			if (answer === solution) {
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
@@ -218,32 +218,47 @@ function main(arguments) {
 				usersScoresBoard[indexUser][1] =
 					usersScoresBoard[indexUser][1] + points;
 				// Adding team score
-				if (teamMode) {
+				if (teamMode === 1) {
 					teamUserPlaying = teamsPlayers.findIndex((team) =>
 						team.includes(arguments[4])
 					);
-
 					newScore = teamsScores[teamUserPlaying] + points;
-					console.log('this is new score', newScore);
 					teamsScores[teamUserPlaying] = newScore;
+				}
+				if (teamMode === 2) {
+					teamUserPlaying = teamsPlayers.findIndex((team) =>
+						team.includes(arguments[4])
+					);
+					if (teamModeOnlyOneReply[teamUserPlaying] === 0) {
+						newScore = teamsScores[teamUserPlaying] + points;
+						teamsScores[teamUserPlaying] = newScore;
+						teamModeOnlyOneReply[teamUserPlaying] = 1;
+					}
 				}
 			}
 		} else {
 			// If never scored & result is correct
-			console.log('this answer user never scored:', answer);
-			console.log('this solution user never scored:', solution);
+
 			if (answer === solution) {
 				// Adding Player Score
 				usersScoresBoard.push([arguments[4], points]);
 				// Adding team score
-				if (teamMode) {
+				if (teamMode === 1) {
 					teamUserPlaying = teamsPlayers.findIndex((team) =>
 						team.includes(arguments[4])
 					);
-
 					newScore = teamsScores[teamUserPlaying] + points;
-					console.log('this is new score', newScore);
 					teamsScores[teamUserPlaying] = newScore;
+				}
+				if (teamMode === 2) {
+					teamUserPlaying = teamsPlayers.findIndex((team) =>
+						team.includes(arguments[4])
+					);
+					if (teamModeOnlyOneReply[teamUserPlaying] === 0) {
+						newScore = teamsScores[teamUserPlaying] + points;
+						teamsScores[teamUserPlaying] = newScore;
+						teamModeOnlyOneReply[teamUserPlaying] = 1;
+					}
 				}
 			}
 		}
@@ -286,6 +301,7 @@ function main(arguments) {
 		teamsScores = [];
 		teamsPlayers = [];
 		roundStarted = 0;
+		pollListStringified = [];
 	}
 
 	// Results
