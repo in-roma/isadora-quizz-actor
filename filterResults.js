@@ -13,7 +13,6 @@
 // iz_input 13 "numberTeam"
 // iz_input 14 "delimTeam"
 // iz_input 15 "delimRename"
-// iz_input 15 "delimRename"
 // iz_input 16 "team initialization"
 
 // iz_output 1 "vote status"
@@ -31,9 +30,10 @@
 // iz_output 13 "teamsName"
 // iz_output 14 "teamsScores"
 // iz_output 15 "JSONpoll"
+// iz_output 16 "JSONindividual scores"
+// iz_output 17 "JSONteam scores"
 
 // Utilities variables
-var initialization = 0;
 var usersRoundHaveReplied = [];
 var roundSolutions = [];
 var usersScoresBoard = [];
@@ -64,6 +64,7 @@ var answerstranslated = [];
 function main(arguments) {
 	// Set up
 	var beginVote = 0;
+	var initialization = arguments[15];
 	optsMode = arguments[8];
 	opts = arguments[7];
 	points = arguments[10];
@@ -72,7 +73,6 @@ function main(arguments) {
 	delimTeam = arguments[13];
 	delimRename = arguments[14];
 	delimString = arguments[6];
-	initialization = arguments[15];
 
 	// Set up team Mode
 	if (teamMode === 1 && initialization) {
@@ -85,6 +85,10 @@ function main(arguments) {
 		teamInitialized = 1;
 		initialization = 0;
 	}
+	console.log('this is teamsPlayers:', teamsPlayers);
+	console.log('this is teamsScores:', teamsScores);
+	console.log('this is teamModeOnlyOneReply:', teamModeOnlyOneReply);
+	console.log('this is teamInitialized state:', teamInitialized);
 
 	// Team mode user selecting his team
 	var teamRegex = new RegExp(`^(${delimTeam})([1-9])$`, 'i');
@@ -232,14 +236,10 @@ function main(arguments) {
 		voteLeft = voteLeft - 1;
 		voteCast = voteCast + 1;
 		orderResult = orderResult + 1;
+
 		// Scoring logic
 		usersRoundHaveReplied.push(arguments[4]);
-		// Needs to compare raws results
-		// if (delimStringLength > 0) {
-		// 	var solutionWithDelim = delimString + solution;
-		// 	answer = arguments[5].toLowerCase();
-		// 	solution = solutionWithDelim.toLowerCase();
-		// }
+
 		// Score
 		console.log('this is answer before score function', answer);
 		console.log('this is solution before score function', solution);
@@ -345,6 +345,24 @@ function main(arguments) {
 
 	// Results
 
+	// Individual
+	var individualScoresList = {
+		names: teamsNames,
+		players: teamsPlayers,
+		scores: teamsScores,
+	};
+
+	var individualScoresListStringified = JSON.stringify(individualScoresList);
+
+	// Team
+	var teamsScoresList;
+	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
+		teamsScoresList = {
+			scores: usersScoresBoard,
+		};
+	}
+	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
+
 	// Poll
 	var pollListStringified;
 	if ((optsMode === 1 || optsMode === 3) && endVote) {
@@ -352,7 +370,7 @@ function main(arguments) {
 		var replierLettered = repliesPoll1.map(
 			(el, index) => lettersConverterValue[index]
 		);
-		var pollList = [];
+		var pollList = {};
 		replierLettered.forEach((element) => {
 			pollList.push({
 				index: element,
@@ -412,6 +430,7 @@ function main(arguments) {
 			usersScoresBoard,
 			teamsPlayers,
 			pollListStringified,
+			individualScoresListStringified,
 		];
 	}
 	if ((teamMode === 1 || teamMode === 2) && !teamInitialized) {
@@ -430,6 +449,8 @@ function main(arguments) {
 			teamsPlayers,
 			teamsNames,
 			teamsScores,
+			pollListStringified,
+			individualScoresListStringified,
 		];
 	}
 
@@ -450,6 +471,8 @@ function main(arguments) {
 			teamsNames,
 			teamsScores,
 			pollListStringified,
+			individualScoresListStringified,
+			teamsScoresListStringified,
 		];
 	}
 	console.log('this is usersRoundHaveReplied:', usersRoundHaveReplied);
