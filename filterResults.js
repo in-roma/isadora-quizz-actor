@@ -31,21 +31,23 @@
 // iz_output 14 "teamsScores"
 // iz_output 15 "JSONpoll"
 // iz_output 16 "JSONindividual scores"
-// iz_output 17 "JSONteam scores"
+// iz_output 17 "JSONteam players"
+// iz_output 18 "JSONteam team players with team names"
+// iz_output 19 "JSONteam team scores"
 
 // Utilities variables
+var lettersConverterValue = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
+var points = 10; // default value if points are not set
 var usersRoundHaveReplied = [];
 var roundSolutions = [];
 var usersScoresBoard = [];
-var points = 10; // default value if points are not set
 var orderResult = 0;
-var display;
-var lettersConverterValue = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 var teamMode = 0;
 var delimTeam = '';
 var delimRename = '';
 var roundStarted = 0;
 var teamInitialized = 0;
+var display;
 
 // Output variables
 var voteStatus = 0;
@@ -60,22 +62,31 @@ var teamsNames = [];
 var teamsScores = [];
 var teamModeOnlyOneReply = [];
 var answerstranslated = [];
+var individualScoresList = {};
+var teamsScoresList = {};
+var playersList = {};
+var teamList = {};
+var pollList = {};
+var pollList2 = {};
 
 function main(arguments) {
 	// Set up
 	var beginVote = 0;
-	var initialization = arguments[15];
-	optsMode = arguments[8];
+	var answer = arguments[5].toLowerCase();
+	delimString = arguments[6];
 	opts = arguments[7];
+	var solution = arguments[9].toLowerCase();
 	points = arguments[10];
 	teamMode = arguments[11];
 	teamNumbers = arguments[12];
 	delimTeam = arguments[13];
 	delimRename = arguments[14];
-	delimString = arguments[6];
+	optsMode = arguments[8];
+	var initialization = arguments[15];
+	var answerWithoutDelim;
 
-	// Set up team Mode
-	if (teamMode === 1 && initialization) {
+	// Team Mode initialization
+	if ((teamMode === 1 || teamMode === 2) && initialization) {
 		teamsPlayers = Array.from({ length: arguments[12] }, (v, k) => []);
 		teamsScores = Array.from({ length: arguments[12] }, (v, k) => 0);
 		teamModeOnlyOneReply = Array.from(
@@ -85,6 +96,14 @@ function main(arguments) {
 		teamInitialized = 1;
 		initialization = 0;
 	}
+
+	if (teamMode === 2 && beginVote) {
+		teamModeOnlyOneReply = Array.from(
+			{ length: arguments[12] },
+			(v, k) => 0
+		);
+	}
+
 	console.log('this is teamsPlayers:', teamsPlayers);
 	console.log('this is teamsScores:', teamsScores);
 	console.log('this is teamModeOnlyOneReply:', teamModeOnlyOneReply);
@@ -109,7 +128,7 @@ function main(arguments) {
 		}
 	}
 
-	// Team mode user changing team name (name is under 20 characters - to change modify the range {1,20} within next line)
+	// Team mode user changing team name (name is under 20 characters)
 	var renameRegex = new RegExp(`^(${delimRename})\s?(.{1,20})`, 'i');
 	if (
 		(teamMode === 1 || teamMode === 2) &&
@@ -123,7 +142,6 @@ function main(arguments) {
 
 		if (teamUser) {
 			var userFound = teamUser - 1;
-
 			teamsNames[userFound] = teamNameSelected;
 		}
 	}
@@ -137,25 +155,18 @@ function main(arguments) {
 		roundStarted = 1;
 		answerstranslated = [];
 		roundSolutions = [];
+		individualScoresList = {};
+		teamsScoresList = {};
+		pollList = {};
+		pollList2 = {};
 	}
-
-	if (teamMode === 2 && beginVote) {
-		teamModeOnlyOneReply = Array.from(
-			{ length: arguments[12] },
-			(v, k) => 0
-		);
-	}
-
-	// Cleaning values
-	var answer = arguments[5].toLowerCase();
-	var solution = arguments[9].toLowerCase();
 
 	// Removing delim from answer
 	var delimStringLength = delimString.length;
 	var delimRegex = new RegExp(`^(?:${delimString})`, 'i');
 	var stateDelim = delimRegex.test(arguments[5]);
 	console.log('this is delimStringLength > 0:', delimStringLength > 0);
-	console.log('this is delimRegex.test(answer):', stateDelim);
+	console.log('this is delimRegex.test(answer) / stateDelim:', stateDelim);
 
 	if (delimStringLength > 0 && delimRegex.test(arguments[5])) {
 		answerWithoutDelim = answer.split('').slice(delimStringLength).join('');
@@ -184,7 +195,7 @@ function main(arguments) {
 	// User response validation according to : opts, optsMode & user answer
 	function validation(opts, answer, optsMode) {
 		var validation = false;
-		console.log('this is test if delim:', stateDelim);
+		console.log('this is delim whitin validation function:', stateDelim);
 		if (delimStringLength > 0) {
 			if ((optsMode === 3 || optsMode === 2) && stateDelim) {
 				var answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
@@ -217,6 +228,7 @@ function main(arguments) {
 				validation = answerLitteralMode2.test(answer);
 			}
 		}
+		console.log('this is validation state:', validation);
 		return validation;
 	}
 
@@ -228,10 +240,6 @@ function main(arguments) {
 		validation(opts, answer, optsMode) &&
 		voteLeft > 0
 	) {
-		console.log(
-			'this validation status in scoring process:',
-			validation(opts, arguments[5], optsMode)
-		);
 		// Vote states
 		voteLeft = voteLeft - 1;
 		voteCast = voteCast + 1;
@@ -247,8 +255,7 @@ function main(arguments) {
 		var newScore;
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
 			// If already scored & result is correct
-			console.log('this is answer:', answer);
-			console.log('this is solution:', solution);
+
 			if (answer === solution) {
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
@@ -303,12 +310,15 @@ function main(arguments) {
 				usersScoresBoard.push([arguments[4], 0]);
 			}
 		}
-
-		roundSolutions.push([
-			arguments[4],
-			answerWithoutDelim.toLowerCase(),
-			orderResult,
-		]);
+		if (delimStringLength > 0) {
+			roundSolutions.push([
+				arguments[4],
+				answerWithoutDelim.toLowerCase(),
+				orderResult,
+			]);
+		} else {
+			roundSolutions.push([arguments[4], answer, orderResult]);
+		}
 	}
 
 	// End vote
@@ -340,80 +350,93 @@ function main(arguments) {
 		teamsScores = [];
 		teamsPlayers = [];
 		roundStarted = 0;
+		individualScoresList = {};
+		teamsScoresList = {};
+		teamList = {};
+		pollList = {};
+		pollList2 = {};
 		pollListStringified = [];
 	}
 
 	// Results
 
 	// Individual
-	var individualScoresList = {
-		names: teamsNames,
-		players: teamsPlayers,
-		scores: teamsScores,
-	};
-
+	usersScoresBoard.forEach((el) => {
+		individualScoresList[el[0]] = el[1];
+	});
+	console.log('this is individualScoresList:', individualScoresList);
 	var individualScoresListStringified = JSON.stringify(individualScoresList);
 
-	// Team
-	var teamsScoresList;
+	// Players
 	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
-		teamsScoresList = {
-			scores: usersScoresBoard,
-		};
+		teamsPlayers.forEach((element, index) => {
+			playersList[index] = element.toString();
+		});
 	}
+	console.log('this is teamsScoresList:', teamsPlayers);
+
+	// Team
+	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
+		teamsScores.forEach((element, index) => {
+			teamsScoresList[teamsNames[index]] = element;
+		});
+		teamsNames.forEach((element, index) => {
+			teamList[element] = teamsPlayers[index].toString();
+		});
+	}
+	console.log('this is teamsScoresList:', teamsScoresList);
 	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
+	var teamListStringified = JSON.stringify(teamList);
+	var teamsPlayersListStringified = JSON.stringify(playersList);
 
 	// Poll
 	var pollListStringified;
-	if ((optsMode === 1 || optsMode === 3) && endVote) {
+
+	if (optsMode === 1 || optsMode === 3) {
 		var repliesPoll1 = Array.from({ length: arguments[7] }, (v, k) => 0);
 		var replierLettered = repliesPoll1.map(
 			(el, index) => lettersConverterValue[index]
 		);
-		var pollList = {};
+
 		replierLettered.forEach((element) => {
-			pollList.push({
-				index: element,
-				users: [],
-				votes: 0,
-			});
+			pollList[element] = 0;
 		});
-		pollList.forEach((element) => {
+		if (roundSolutions.length > 0) {
 			roundSolutions.forEach((el) => {
-				if (el[1] === element.index) {
-					element.users.push(el[0]);
-					element.votes = element.votes + 1;
-				}
+				Object.entries(pollList).forEach((entry) => {
+					var [key, value] = entry;
+					if (el[1] === key) {
+						pollList[key] = value + 1;
+					}
+				});
 			});
-		});
+		}
 		pollListStringified = JSON.stringify(pollList);
 	}
 
-	if (optsMode === 2 && endVote) {
+	if (optsMode === 2) {
 		var repliesPoll2 = Array.from(
 			{ length: arguments[7] },
 			(v, k) => k + 1
 		);
 
-		var pollList2 = [];
 		repliesPoll2.forEach((element) => {
-			pollList2.push({
-				index: element,
-				users: [],
-				votes: 0,
-			});
+			pollList2[element] = 0;
 		});
-		pollList2.forEach((element) => {
+		if (roundSolutions.length > 0) {
 			roundSolutions.forEach((el) => {
-				if (parseInt(el[1]) === element.index) {
-					element.users.push(el[0]);
-					element.votes = element.votes + 1;
-				}
+				Object.entries(pollList2).forEach((entry) => {
+					var [key, value] = entry;
+					if (el[1] === key) {
+						pollList2[key] = value + 1;
+					}
+				});
 			});
-		});
+		}
 		pollListStringified = JSON.stringify(pollList2);
 	}
-
+	console.log('this is pollList:', pollList);
+	console.log('this is pollList2:', pollList2);
 	// Displays
 	if (teamMode === 0) {
 		display = [
@@ -429,6 +452,8 @@ function main(arguments) {
 			teamInitialized,
 			usersScoresBoard,
 			teamsPlayers,
+			teamsNames,
+			teamsScores,
 			pollListStringified,
 			individualScoresListStringified,
 		];
@@ -451,6 +476,8 @@ function main(arguments) {
 			teamsScores,
 			pollListStringified,
 			individualScoresListStringified,
+			teamsPlayersListStringified,
+			teamListStringified,
 		];
 	}
 
@@ -472,6 +499,8 @@ function main(arguments) {
 			teamsScores,
 			pollListStringified,
 			individualScoresListStringified,
+			teamsPlayersListStringified,
+			teamListStringified,
 			teamsScoresListStringified,
 		];
 	}
@@ -494,7 +523,7 @@ main([
 	1, //8optsMode
 	'', //9solution
 	50, //10points
-	1, //11teamMode
+	0, //11teamMode
 	2, //12teamNumbers
 	'team', //13delimTeam
 	'rename', //14delimRename
