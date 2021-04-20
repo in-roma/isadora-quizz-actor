@@ -97,7 +97,8 @@ function main(arguments) {
 		initialization = 0;
 	}
 
-	if (teamMode === 2 && beginVote) {
+	if (teamMode === 2 && arguments[0] === 1) {
+		teamModeOnlyOneReply = [];
 		teamModeOnlyOneReply = Array.from(
 			{ length: arguments[12] },
 			(v, k) => 0
@@ -255,7 +256,6 @@ function main(arguments) {
 		var newScore;
 		if (usersScoresBoard.some((user) => user[0] === arguments[4])) {
 			// If already scored & result is correct
-
 			if (answer === solution) {
 				var indexUser = usersScoresBoard.findIndex(
 					(user) => user[0] === arguments[4]
@@ -264,22 +264,30 @@ function main(arguments) {
 				usersScoresBoard[indexUser][1] =
 					usersScoresBoard[indexUser][1] + points;
 				// Adding team score
+				teamUserPlaying = teamsPlayers.findIndex((team) =>
+					team.includes(arguments[4])
+				);
 				if (teamMode === 1) {
-					teamUserPlaying = teamsPlayers.findIndex((team) =>
-						team.includes(arguments[4])
-					);
 					newScore = teamsScores[teamUserPlaying] + points;
 					teamsScores[teamUserPlaying] = newScore;
 				}
 				if (teamMode === 2) {
-					teamUserPlaying = teamsPlayers.findIndex((team) =>
-						team.includes(arguments[4])
-					);
 					if (teamModeOnlyOneReply[teamUserPlaying] === 0) {
 						newScore = teamsScores[teamUserPlaying] + points;
 						teamsScores[teamUserPlaying] = newScore;
+
 						teamModeOnlyOneReply[teamUserPlaying] = 1;
 					}
+				}
+			}
+			// If already scored & result is not correct
+			if (answer !== solution) {
+				if (teamMode === 2) {
+					teamUserPlaying = teamsPlayers.findIndex((team) =>
+						team.includes(arguments[4])
+					);
+
+					teamModeOnlyOneReply[teamUserPlaying] = 1;
 				}
 			}
 		} else {
@@ -288,17 +296,14 @@ function main(arguments) {
 				// Adding Player Score
 				usersScoresBoard.push([arguments[4], points]);
 				// Adding team score
+				teamUserPlaying = teamsPlayers.findIndex((team) =>
+					team.includes(arguments[4])
+				);
 				if (teamMode === 1) {
-					teamUserPlaying = teamsPlayers.findIndex((team) =>
-						team.includes(arguments[4])
-					);
 					newScore = teamsScores[teamUserPlaying] + points;
 					teamsScores[teamUserPlaying] = newScore;
 				}
 				if (teamMode === 2) {
-					teamUserPlaying = teamsPlayers.findIndex((team) =>
-						team.includes(arguments[4])
-					);
 					if (teamModeOnlyOneReply[teamUserPlaying] === 0) {
 						newScore = teamsScores[teamUserPlaying] + points;
 						teamsScores[teamUserPlaying] = newScore;
@@ -306,7 +311,15 @@ function main(arguments) {
 					}
 				}
 			}
+			// If never scored & result is not correct
 			if (answer !== solution) {
+				if (teamMode === 2) {
+					teamUserPlaying = teamsPlayers.findIndex((team) =>
+						team.includes(arguments[4])
+					);
+
+					teamModeOnlyOneReply[teamUserPlaying] = 1;
+				}
 				usersScoresBoard.push([arguments[4], 0]);
 			}
 		}
