@@ -130,7 +130,7 @@ function main(arguments) {
 	}
 
 	// Team mode user changing team name (name is under 20 characters)
-	var renameRegex = new RegExp(`^(${delimRename})\s?(.{1,20})`, 'i');
+	var renameRegex = new RegExp(`^(${delimRename})(.{1,20})`, 'i');
 	if (
 		(teamMode === 1 || teamMode === 2) &&
 		delimRename.length > 0 &&
@@ -383,24 +383,23 @@ function main(arguments) {
 	// Players
 	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
 		teamsPlayers.forEach((element, index) => {
-			playersList[index] = element.toString();
+			playersList['T' + (index + 1)] = element.toString();
 		});
 	}
 	console.log('this is teamsScoresList:', teamsPlayers);
-
+	var teamsPlayersListStringified = JSON.stringify(playersList);
 	// Team
 	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
 		teamsScores.forEach((element, index) => {
 			teamsScoresList[teamsNames[index]] = element;
 		});
 		teamsNames.forEach((element, index) => {
-			teamList[element] = teamsPlayers[index].toString();
+			teamList['T' + (index + 1)] = element.toString();
 		});
 	}
 	console.log('this is teamsScoresList:', teamsScoresList);
 	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
 	var teamListStringified = JSON.stringify(teamList);
-	var teamsPlayersListStringified = JSON.stringify(playersList);
 
 	// Poll
 	var pollListStringified;
@@ -471,7 +470,7 @@ function main(arguments) {
 			individualScoresListStringified,
 		];
 	}
-	if ((teamMode === 1 || teamMode === 2) && !teamInitialized) {
+	if ((teamMode === 1 || teamMode === 2) && !voteStatus) {
 		display = [
 			voteStatus, // return vote status state (0/1)
 			arguments[0], // return begin vote state (0/1)
@@ -493,8 +492,7 @@ function main(arguments) {
 			teamListStringified,
 		];
 	}
-
-	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
+	if ((teamMode === 1 || teamMode === 2) && voteStatus) {
 		display = [
 			voteStatus, // return vote status state (0/1)
 			arguments[0], // return begin vote state (0/1)
