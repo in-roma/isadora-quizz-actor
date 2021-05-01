@@ -1,40 +1,3 @@
-// iz_input 1 "begin vote"
-// iz_input 2 "end vote"
-// iz_input 3 "reset"
-// iz_input 4 "users"
-// iz_input 5 "curr ID"
-// iz_input 6 "curr mess"
-// iz_input 7 "delim"
-// iz_input 8 "opts"
-// iz_input 9 "optsMode"
-// iz_input 10 "solution"
-// iz_input 11 "pointsValue"
-// iz_input 12 "teamMode"
-// iz_input 13 "numberTeam"
-// iz_input 14 "delimTeam"
-// iz_input 15 "delimRename"
-// iz_input 16 "team initialization"
-
-// iz_output 1 "vote status"
-// iz_output 2 "begin vote"
-// iz_output 3 "end vote"
-// iz_output 4 "reset"
-// iz_output 5 "users"
-// iz_output 6 "votes cast"
-// iz_output 7 "votes left"
-// iz_output 8 "# opts"
-// iz_output 9 "# opts-Mode"
-// iz_output 10 "team initialized"
-// iz_output 11 "users Scores"
-// iz_output 12 "teamsComposition"
-// iz_output 13 "teamsName"
-// iz_output 14 "teamsScores"
-// iz_output 15 "JSONpoll"
-// iz_output 16 "JSONindividual scores"
-// iz_output 17 "JSONteam players"
-// iz_output 18 "JSONteam team players with team names"
-// iz_output 19 "JSONteam team scores"
-
 // Utilities variables
 var lettersConverterValue = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i'];
 var points = 10; // default value if points are not set
@@ -74,11 +37,10 @@ function main(arguments) {
 	var beginVote = 0;
 	var answer = arguments[5].toLowerCase();
 	delimString = arguments[6];
-	opts = arguments[7];
+	var opts = arguments[7];
 	var solution = arguments[9].toLowerCase();
 	points = arguments[10];
 	teamMode = arguments[11];
-	teamNumbers = arguments[12];
 	delimTeam = arguments[13];
 	delimRename = arguments[14];
 	optsMode = arguments[8];
@@ -112,7 +74,7 @@ function main(arguments) {
 
 	// Team mode user selecting his team
 	var teamRegex = new RegExp(`^(${delimTeam})([1-9])$`, 'i');
-
+	var teamNumInt;
 	if (
 		(teamMode === 1 || teamMode === 2) &&
 		delimTeam.length > 0 &&
@@ -196,6 +158,7 @@ function main(arguments) {
 	// User response validation according to : opts, optsMode & user answer
 	function validation(opts, answer, optsMode) {
 		var validation = false;
+		var optsConverted;
 		console.log('this is delim whitin validation function:', stateDelim);
 		if (delimStringLength > 0) {
 			if ((optsMode === 3 || optsMode === 2) && stateDelim) {
@@ -215,16 +178,13 @@ function main(arguments) {
 		}
 		if (delimStringLength === 0) {
 			if (optsMode === 3 || optsMode === 2) {
-				var answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
+				answerLitteralMode1 = new RegExp(`[1-${opts}]$`, 'i');
 
 				validation = answerLitteralMode1.test(answer);
 			}
 			if (optsMode === 1) {
 				optsConverted = lettersConverterValue[opts - 1];
-				var answerLitteralMode2 = new RegExp(
-					`[a-${optsConverted}]$`,
-					'i'
-				);
+				answerLitteralMode2 = new RegExp(`[a-${optsConverted}]$`, 'i');
 
 				validation = answerLitteralMode2.test(answer);
 			}
@@ -345,7 +305,7 @@ function main(arguments) {
 		usersRoundHaveReplied = [];
 		roundStarted = 0;
 	}
-
+	var pollListStringified;
 	// Reset (stop quizz)
 	if (arguments[2]) {
 		initialization = 0;
@@ -373,36 +333,7 @@ function main(arguments) {
 
 	// Results
 
-	// Individual
-	usersScoresBoard.forEach((el) => {
-		individualScoresList[el[0]] = el[1];
-	});
-	console.log('this is individualScoresList:', individualScoresList);
-	var individualScoresListStringified = JSON.stringify(individualScoresList);
-
-	// Players
-	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
-		teamsPlayers.forEach((element, index) => {
-			playersList['T' + (index + 1)] = element.toString();
-		});
-	}
-	console.log('this is teamsScoresList:', teamsPlayers);
-	var teamsPlayersListStringified = JSON.stringify(playersList);
-	// Team
-	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
-		teamsScores.forEach((element, index) => {
-			teamsScoresList[teamsNames[index]] = element;
-		});
-		teamsNames.forEach((element, index) => {
-			teamList['T' + (index + 1)] = element.toString();
-		});
-	}
-	console.log('this is teamsScoresList:', teamsScoresList);
-	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
-	var teamListStringified = JSON.stringify(teamList);
-
 	// Poll
-	var pollListStringified;
 
 	if (optsMode === 1 || optsMode === 3) {
 		var repliesPoll1 = Array.from({ length: arguments[7] }, (v, k) => 0);
@@ -447,8 +378,35 @@ function main(arguments) {
 		}
 		pollListStringified = JSON.stringify(pollList2);
 	}
-	console.log('this is pollList:', pollList);
-	console.log('this is pollList2:', pollList2);
+	// Individual
+	usersScoresBoard.forEach((el) => {
+		individualScoresList[el[0]] = el[1];
+	});
+	console.log('this is individualScoresList:', individualScoresList);
+
+	// Players
+	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
+		teamsPlayers.forEach((element, index) => {
+			playersList['T' + (index + 1)] = element.toString();
+		});
+	}
+	// Team
+	if ((teamMode === 1 || teamMode === 2) && teamInitialized) {
+		teamsNames.forEach((element, index) => {
+			teamList['T' + (index + 1)] = element.toString();
+		});
+
+		teamsScores.forEach((element, index) => {
+			teamsScoresList[teamsNames[index]] = element;
+		});
+	}
+	console.log('this is teamsScoresList:', teamsScoresList);
+
+	var individualScoresListStringified = JSON.stringify(individualScoresList);
+	var teamsPlayersListStringified = JSON.stringify(playersList);
+	var teamListStringified = JSON.stringify(teamList);
+	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
+
 	// Displays
 	if (teamMode === 0) {
 		display = [
@@ -490,6 +448,7 @@ function main(arguments) {
 			individualScoresListStringified,
 			teamsPlayersListStringified,
 			teamListStringified,
+			teamsScoresListStringified,
 		];
 	}
 	if ((teamMode === 1 || teamMode === 2) && voteStatus) {
