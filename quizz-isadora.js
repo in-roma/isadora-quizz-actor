@@ -84,7 +84,7 @@ function main(arguments) {
 		}
 	}
 
-	// Team mode user changing team name (name is under 20 characters)
+	// Team mode user changing team name (name is under 24 characters)
 	var renameRegex = new RegExp(`^(${delimRename})\s*(.{1,24})`, 'i');
 	if (
 		(teamMode === 1 || teamMode === 2) &&
