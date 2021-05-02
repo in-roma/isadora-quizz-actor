@@ -290,36 +290,6 @@ function main(arguments) {
 		usersRoundHaveReplied = [];
 		roundStarted = 0;
 	}
-	var pollListStringified;
-	// Reset (stop quizz)
-	if (arguments[2]) {
-		initialization = 0;
-		teamInitialized = 0;
-		voteStatus = 0; // Set voteStatus to 0 (off)
-		beginVote = 0; // Set beginVote to 0 (off)
-		reset = 1; // Set reset to 1 (on)
-		orderResult = 0; // User order of reply
-		voteLeft = 0; // clear votes left
-		voteCast = 0; // clear votes cast
-		usersRoundHaveReplied = []; // clear userResponses
-		roundSolutions = []; // clear roundSolutions
-		usersScoresBoard = []; // Set scores to empty array
-		teamsNames = [];
-		teamsScores = [];
-		teamsPlayers = [];
-		roundStarted = 0;
-		individualScoresList = {};
-		teamsScoresList = {};
-		teamList = {};
-		playersList = {};
-		pollList = {};
-		pollList2 = {};
-		pollListStringified = {};
-		individualScoresListStringified = {};
-		teamsPlayersListStringified = {};
-		teamListStringified = {};
-		teamsScoresListStringified = {};
-	}
 
 	// Results
 
@@ -393,6 +363,37 @@ function main(arguments) {
 	var teamsPlayersListStringified = JSON.stringify(playersList);
 	var teamListStringified = JSON.stringify(teamList);
 	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
+	var pollListStringified;
+
+	// Reset (stop quizz)
+	if (arguments[2]) {
+		initialization = 0;
+		teamInitialized = 0;
+		voteStatus = 0; // Set voteStatus to 0 (off)
+		beginVote = 0; // Set beginVote to 0 (off)
+		reset = 1; // Set reset to 1 (on)
+		orderResult = 0; // User order of reply
+		voteLeft = 0; // clear votes left
+		voteCast = 0; // clear votes cast
+		usersRoundHaveReplied = []; // clear userResponses
+		roundSolutions = []; // clear roundSolutions
+		usersScoresBoard = []; // Set scores to empty array
+		teamsNames = [];
+		teamsScores = [];
+		teamsPlayers = [];
+		roundStarted = 0;
+		individualScoresList = {};
+		teamsScoresList = {};
+		teamList = {};
+		playersList = {};
+		pollList = {};
+		pollList2 = {};
+		pollListStringified = {};
+		individualScoresListStringified = {};
+		teamsPlayersListStringified = {};
+		teamListStringified = {};
+		teamsScoresListStringified = {};
+	}
 
 	// Displays
 	if (teamMode === 0) {
