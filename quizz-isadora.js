@@ -292,8 +292,8 @@ function main(arguments) {
 	}
 
 	// Results
-
 	// Poll
+	var pollListStringified;
 	if (optsMode === 1 || optsMode === 3) {
 		var repliesPoll1 = Array.from({ length: arguments[7] }, (v, k) => 0);
 		var replierLettered = repliesPoll1.map(
@@ -363,7 +363,6 @@ function main(arguments) {
 	var teamsPlayersListStringified = JSON.stringify(playersList);
 	var teamListStringified = JSON.stringify(teamList);
 	var teamsScoresListStringified = JSON.stringify(teamsScoresList);
-	var pollListStringified;
 
 	// Reset (stop quizz)
 	if (arguments[2]) {
